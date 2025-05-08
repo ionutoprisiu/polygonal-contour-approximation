@@ -1,0 +1,3 @@
+C:/Users/ionut/Desktop/Semestrul2/PI/Proiect/cmake-build-debug/CMakeFiles/polygonal_approximation.dir
+C:/Users/ionut/Desktop/Semestrul2/PI/Proiect/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/ionut/Desktop/Semestrul2/PI/Proiect/cmake-build-debug/CMakeFiles/rebuild_cache.dir
