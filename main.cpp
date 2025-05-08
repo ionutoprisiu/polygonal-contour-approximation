@@ -6,36 +6,55 @@ using namespace std;
 using namespace cv;
 
 int main() {
-    Mat source = imread("C:\\Users\\ionut\\Desktop\\Semestrul2\\PI\\Proiect\\images\\kids.bmp", IMREAD_COLOR);
+    Mat source = imread("C:\\Users\\ionut\\Desktop\\Semestrul2\\PI\\Proiect\\images\\saturn.bmp", IMREAD_COLOR);
     if (source.empty()) {
         cout << "Nu s-a putut încărca imaginea!" << endl;
         return -1;
     }
 
-    Mat preprocessed = preprocessImage(source);
+    // Afișăm imaginea originală
+    imshow("Imagine Originala", source);
 
-    Mat cannyEdges = apply_Canny(preprocessed, 0.05, 0.15, "sobel", false);
+    // Convertim imaginea la grayscale
+    Mat gray;
+    cvtColor(source, gray, COLOR_BGR2GRAY);
 
-    Mat kernel = getStructuringElement(MORPH_ELLIPSE, Size(5, 5));
-    morphologyEx(cannyEdges, cannyEdges, MORPH_CLOSE, kernel);
+    // Aplicăm algoritmul Canny
+    Mat cannyEdges = apply_Canny(gray, 50, 150, "sobel", false);
+    imshow("Canny Edges", cannyEdges);
 
+    // Extragem contururile
     auto contours = extractContours(cannyEdges);
+    cout << "Număr contururi găsite: " << contours.size() << endl;
 
-    vector<vector<Point>> filteredContours;
-    for (const auto& c : contours) {
-        double area = contourArea(c);
-        double peri = arcLength(c, true);
-        RotatedRect rect = minAreaRect(c);
-        double aspect = rect.size.width > 0 && rect.size.height > 0 ? max(rect.size.width, rect.size.height) / min(rect.size.width, rect.size.height) : 0;
-        if (area > 50 && area < 3000 && peri > 40 && aspect < 6.0 && aspect > 1.2) {
-            filteredContours.push_back(c);
+    // Aplicăm RDP cu 3 valori diferite pentru epsilon
+    vector<double> epsilons = {0.005, 0.02, 0.05}; // 0.5%, 2%, 5% din perimetru
+    
+    for (int i = 0; i < epsilons.size(); i++) {
+        vector<vector<Point>> approxContours;
+        
+        for (const auto& contour : contours) {
+            vector<Point> approx;
+            double peri = arcLength(contour, true);
+            double epsilon = epsilons[i] * peri;
+            approxPolyDP(contour, approx, epsilon, true);
+            
+            if (approx.size() >= 3) {
+                approxContours.push_back(approx);
+            }
         }
+        
+        // Desenăm contururile aproximate pe imaginea originală
+        Mat result = source.clone();
+        for (const auto& approx : approxContours) {
+            polylines(result, approx, true, Scalar(0, 0, 255), 1);
+        }
+        
+        // Afișăm rezultatul
+        string windowName = "RDP Epsilon " + to_string(epsilons[i] * 100) + "%";
+        imshow(windowName, result);
+        cout << "Epsilon " << epsilons[i] * 100 << "%: " << approxContours.size() << " contururi" << endl;
     }
-
-    auto approxContoursRDP = approximateContoursRDP(filteredContours, 0.02);
-    Mat contourImageRDP = source.clone();
-    drawPolygonalContours(contourImageRDP, approxContoursRDP, Scalar(0,255,0));
-    imshow("Contururi Poligonale RDP - FINAL", contourImageRDP);
 
     waitKey(0);
     return 0;
