@@ -41,7 +41,10 @@ Mat apply_Canny(Mat source, int low_threshold, int high_threshold, string filter
 
 // Funcții pentru extragerea și aproximarea contururilor
 vector<vector<Point>> extractContours(const Mat& edgeImage);
+double pointLineDistance(const Point& point, const Point& lineStart, const Point& lineEnd);
+vector<Point> rdp_algorithm(const vector<Point>& points, double epsilon);
 vector<vector<Point>> approximateContoursRDP(const vector<vector<Point>>& contours, double epsilonRatio);
 void drawPolygonalContours(Mat& image, const vector<vector<Point>>& approxContours, Scalar color = Scalar(0,0,255));
+Mat resizeImage(const Mat& source, int maxDimension);
 
 #endif 

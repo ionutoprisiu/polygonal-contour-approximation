@@ -331,25 +331,40 @@ vector<vector<Point>> extractContours(const Mat& edgeImage) {
     return contours;
 }
 
-// Funcție îmbunătățită pentru calculul distanței de la un punct la o linie
+// Funcție îmbunătățită pentru calculul distanței de la un punct la un segment de linie
 double pointLineDistance(const Point& point, const Point& lineStart, const Point& lineEnd) {
     // Calculăm vectorii
     double dx = lineEnd.x - lineStart.x;
     double dy = lineEnd.y - lineStart.y;
     
-    // Lungimea liniei
-    double lineLength = sqrt(dx * dx + dy * dy);
-    if (lineLength < 1e-6) return 0; // Evităm împărțirea la zero
+    // Lungimea pătrată a segmentului
+    double lineLengthSquared = dx * dx + dy * dy;
     
-    // Calculăm distanța perpendiculară
-    double distance = abs(dy * point.x - dx * point.y + lineEnd.x * lineStart.y - lineEnd.y * lineStart.x) / lineLength;
-    return distance;
+    // Dacă segmentul este foarte scurt, returnăm distanța până la primul punct
+    if (lineLengthSquared < 1e-6) {
+        double dx1 = point.x - lineStart.x;
+        double dy1 = point.y - lineStart.y;
+        return sqrt(dx1 * dx1 + dy1 * dy1);
+    }
+    
+    // Calculăm proiecția punctului pe segment
+    double t = ((point.x - lineStart.x) * dx + (point.y - lineStart.y) * dy) / lineLengthSquared;
+    t = std::max(0.0, std::min(1.0, t)); // Clampăm t între 0 și 1
+    
+    // Calculăm punctul proiectat
+    double projX = lineStart.x + t * dx;
+    double projY = lineStart.y + t * dy;
+    
+    // Calculăm distanța până la punctul proiectat
+    double dx2 = point.x - projX;
+    double dy2 = point.y - projY;
+    return sqrt(dx2 * dx2 + dy2 * dy2);
 }
 
 // Implementarea îmbunătățită a algoritmului Ramer-Douglas-Peucker
 vector<Point> rdp_algorithm(const vector<Point>& points, double epsilon) {
     if (points.size() <= 2) return points;
-
+    
     // Găsim punctul cu distanța maximă
     double maxDistance = 0;
     int maxIndex = 0;
@@ -362,7 +377,7 @@ vector<Point> rdp_algorithm(const vector<Point>& points, double epsilon) {
             maxIndex = i;
         }
     }
-
+    
     // Dacă distanța maximă este mai mare decât epsilon, împărțim și recursiv
     if (maxDistance > epsilon) {
         // Prima parte a conturului
@@ -383,4 +398,27 @@ vector<Point> rdp_algorithm(const vector<Point>& points, double epsilon) {
     
     // Dacă distanța maximă este mai mică decât epsilon, returnăm doar capetele
     return {points.front(), points.back()};
+}
+
+Mat resizeImage(const Mat& source, int maxDimension) {
+    // Determinăm dimensiunea maximă (lățime sau înălțime)
+    int maxSize = std::max(source.cols, source.rows);
+    
+    // Dacă imaginea este mai mică decât dimensiunea maximă, o returnăm neschimbată
+    if (maxSize <= maxDimension) {
+        return source.clone();
+    }
+    
+    // Calculăm factorul de scalare
+    double scale = (double)maxDimension / maxSize;
+    
+    // Calculăm noile dimensiuni
+    int newWidth = (int)(source.cols * scale);
+    int newHeight = (int)(source.rows * scale);
+    
+    // Redimensionăm imaginea
+    Mat resized;
+    resize(source, resized, Size(newWidth, newHeight), 0, 0, INTER_LINEAR);
+    
+    return resized;
 }

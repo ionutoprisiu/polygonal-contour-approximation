@@ -1,4 +1,4 @@
-"C:\Program Files\JetBrains\CLion 2023.3.4\bin\cmake\win\x64\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_MAKE_PROGRAM=C:/Program Files/JetBrains/CLion 2023.3.4/bin/ninja/win/x64/ninja.exe" -G Ninja -S C:\Users\ionut\Desktop\ProiectPI\ProiectPIFinal -B C:\Users\ionut\Desktop\ProiectPI\ProiectPIFinal\cmake-build-debug
+"C:\Program Files\JetBrains\CLion 2023.3.4\bin\cmake\win\x64\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_MAKE_PROGRAM=C:/Program Files/JetBrains/CLion 2023.3.4/bin/ninja/win/x64/ninja.exe" -G Ninja -S C:\Users\ionut\Desktop\Semestrul2\PI\ProiectPIFinal -B C:\Users\ionut\Desktop\Semestrul2\PI\ProiectPIFinal\cmake-build-debug
 -- The C compiler identification is MSVC 19.39.33521.0
 -- The CXX compiler identification is MSVC 19.39.33521.0
 -- Detecting C compiler ABI info
@@ -12,6 +12,6 @@
 -- Detecting CXX compile features
 -- Detecting CXX compile features - done
 -- Found OpenCV: C:/opt/opencv/build (found version "4.11.0")
--- Configuring done (3.1s)
--- Generating done (0.1s)
--- Build files have been written to: C:/Users/ionut/Desktop/ProiectPI/ProiectPIFinal/cmake-build-debug
+-- Configuring done (7.0s)
+-- Generating done (0.3s)
+-- Build files have been written to: C:/Users/ionut/Desktop/Semestrul2/PI/ProiectPIFinal/cmake-build-debug
