@@ -6,36 +6,38 @@
 using namespace std;
 using namespace cv;
 
-// Functie pentru masurarea timpului de executie
+// Funcție pentru măsurarea timpului de execuție al unei funcții
+// Primește o funcție lambda și returnează timpul de execuție în milisecunde
 double measureExecutionTime(function<void()> func) {
-    auto start = chrono::high_resolution_clock::now();
-    func();
-    auto end = chrono::high_resolution_clock::now();
-    return chrono::duration_cast<chrono::milliseconds>(end - start).count();
+    auto start = chrono::high_resolution_clock::now(); // Măsoară timpul de start
+    func(); // Execută funcția
+    auto end = chrono::high_resolution_clock::now(); // Măsoară timpul de sfârșit
+    return chrono::duration_cast<chrono::milliseconds>(end - start).count(); // Calculează diferența
 }
 
-// Functie pentru calculul diferentei dintre doua imagini
+// Funcție pentru calculul diferenței medii între două imagini
+// Returnează o valoare între 0 și 255 reprezentând diferența medie
 double calculateImageDifference(const Mat& img1, const Mat& img2) {
     Mat diff;
-    absdiff(img1, img2, diff);
-    return sum(diff)[0] / (img1.rows * img1.cols);
+    absdiff(img1, img2, diff); // Calculează diferența absolută între imagini
+    return sum(diff)[0] / (img1.rows * img1.cols); // Returnează media diferenței
 }
 
 int main() {
-    // Incarcam imaginea
+    // Încărcarea imaginii sursă
     Mat source = imread("C:\\Users\\ionut\\Desktop\\Semestrul2\\PI\\ProiectPIFinal\\images\\bicicleta.bmp", IMREAD_COLOR);
     if (source.empty()) {
-        cout << "Nu s-a putut incarca imaginea!" << endl;
+        cout << "Nu s-a putut încărca imaginea!" << endl;
         return -1;
     }
 
-    // Redimensionam imaginea daca este prea mare
+    // Redimensionarea imaginii dacă este prea mare
     source = resizeImage(source, 600);
 
-    // Afisam imaginea originala
-    imshow("Imagine Originala", source);
+    // Afișarea imaginii originale
+    imshow("Imagine Originală", source);
 
-    // Convertim imaginea la grayscale
+    // Conversia imaginii la grayscale
     Mat gray;
     cvtColor(source, gray, COLOR_BGR2GRAY);
 
@@ -43,44 +45,60 @@ int main() {
     cout << "\nTest 1: Compararea algoritmului Canny" << endl;
     cout << "----------------------------------------" << endl;
 
-    // Parametri pentru Canny
-    int lowThreshold = 50;
-    int highThreshold = 150;
+    // Parametri pentru algoritmul Canny
+    int lowThreshold = 50;  // Pragul inferior
+    int highThreshold = 150; // Pragul superior
 
-    // Masuram timpul pentru implementarea noastra
+    // Măsurarea timpului pentru implementarea proprie
     Mat myCannyResult;
     double myCannyTime = measureExecutionTime([&]() {
         myCannyResult = apply_Canny(gray, lowThreshold, highThreshold, "sobel", false);
     });
 
-    // Masuram timpul pentru OpenCV Canny
+    // Măsurarea timpului pentru implementarea OpenCV
     Mat opencvCannyResult;
     double opencvCannyTime = measureExecutionTime([&]() {
         Canny(gray, opencvCannyResult, lowThreshold, highThreshold);
     });
 
-    // Calculam diferenta dintre rezultate
-    double cannyDifference = calculateImageDifference(myCannyResult, opencvCannyResult);
+    // Măsurarea timpului pentru implementarea imbunatatita
+    Mat myCannyImprovedResult;
+    double myCannyImprovedTime = measureExecutionTime([&]() {
+        myCannyImprovedResult = apply_Canny_improved(gray, lowThreshold, highThreshold, "sobel", false);
+    });
 
+    // Calcularea diferentelor
+    double cannyDifference = calculateImageDifference(myCannyResult, opencvCannyResult);
+    double cannyImprovedDifference = calculateImageDifference(myCannyImprovedResult, opencvCannyResult);
+
+    // Afișarea rezultatelor pentru Canny
     cout << "Timp implementare proprie: " << myCannyTime << " ms" << endl;
+    cout << "Timp implementare imbunatatita: " << myCannyImprovedTime << " ms" << endl;
     cout << "Timp OpenCV: " << opencvCannyTime << " ms" << endl;
-    cout << "Diferenta medie intre rezultate: " << cannyDifference << endl;
+    cout << "Diferenta medie (proprie vs OpenCV): " << cannyDifference << endl;
+    cout << "Diferenta medie (imbunatatit vs OpenCV): " << cannyImprovedDifference << endl;
+
+    // Afisarea imaginilor rezultat
+    imshow("Canny Propriu", myCannyResult);
+    imshow("Canny Imbunatatit", myCannyImprovedResult);
+    imshow("Canny OpenCV", opencvCannyResult);
 
     // Test 2: Compararea algoritmului RDP
     cout << "\nTest 2: Compararea algoritmului RDP" << endl;
     cout << "----------------------------------------" << endl;
 
-    // Extragem contururile
+    // Extragerea contururilor din imaginea procesată
     vector<vector<Point>> contours;
     findContours(myCannyResult, contours, RETR_EXTERNAL, CHAIN_APPROX_NONE);
 
-    // Testam cu diferite valori epsilon
+    // Testarea cu diferite valori epsilon pentru aproximarea poligonala
     vector<double> epsilons = {0.005, 0.02, 0.05}; // 0.5%, 2%, 5% din perimetru
 
+    // Testarea pentru fiecare valoare epsilon
     for (double epsilonRatio : epsilons) {
         cout << "\nTestare cu epsilon = " << epsilonRatio * 100 << "% din perimetru" << endl;
 
-        // Masuram timpul pentru implementarea noastra
+        // Măsurarea timpului pentru implementarea proprie RDP
         vector<vector<Point>> myRDPContours;
         double myRDPTime = measureExecutionTime([&]() {
             for (const auto& contour : contours) {
@@ -93,7 +111,7 @@ int main() {
             }
         });
 
-        // Masuram timpul pentru OpenCV RDP
+        // Măsurarea timpului pentru implementarea OpenCV RDP
         vector<vector<Point>> opencvRDPContours;
         double opencvRDPTime = measureExecutionTime([&]() {
             for (const auto& contour : contours) {
@@ -107,32 +125,45 @@ int main() {
             }
         });
 
-        // Calculam diferenta in numarul de puncte
+        // Masurarea timpului pentru implementarea imbunatatita RDP
+        vector<vector<Point>> myRDPImprovedContours;
+        double myRDPImprovedTime = measureExecutionTime([&]() {
+            myRDPImprovedContours = approximateContoursRDP_improved(contours, epsilonRatio);
+        });
+
+        // Calcularea diferenței în numărul de puncte
         int myTotalPoints = 0;
+        int improvedTotalPoints = 0;
         int opencvTotalPoints = 0;
         for (const auto& contour : myRDPContours) myTotalPoints += contour.size();
+        for (const auto& contour : myRDPImprovedContours) improvedTotalPoints += contour.size();
         for (const auto& contour : opencvRDPContours) opencvTotalPoints += contour.size();
 
+        // Afișarea rezultatelor pentru RDP
         cout << "Timp implementare proprie: " << myRDPTime << " ms" << endl;
+        cout << "Timp implementare imbunatatita: " << myRDPImprovedTime << " ms" << endl;
         cout << "Timp OpenCV: " << opencvRDPTime << " ms" << endl;
         cout << "Numar puncte implementare proprie: " << myTotalPoints << endl;
+        cout << "Numar puncte implementare imbunatatita: " << improvedTotalPoints << endl;
         cout << "Numar puncte OpenCV: " << opencvTotalPoints << endl;
-        cout << "Diferenta in numarul de puncte: " << abs(myTotalPoints - opencvTotalPoints) << endl;
+        cout << "Diferenta puncte (propriu vs OpenCV): " << abs(myTotalPoints - opencvTotalPoints) << endl;
+        cout << "Diferenta puncte (imbunatatit vs OpenCV): " << abs(improvedTotalPoints - opencvTotalPoints) << endl;
 
-        // Afisam rezultatele vizuale
+        // Afișarea rezultatelor vizuale
         Mat myResult = source.clone();
+        Mat improvedResult = source.clone();
         Mat opencvResult = source.clone();
 
-        for (const auto& contour : myRDPContours) {
-            polylines(myResult, contour, true, Scalar(0, 0, 255), 1);
-        }
-        for (const auto& contour : opencvRDPContours) {
-            polylines(opencvResult, contour, true, Scalar(0, 0, 255), 1);
-        }
+        // Desenare contururi
+        for (const auto& contour : myRDPContours)   polylines(myResult, contour, true, Scalar(0, 0, 255), 1);
+        for (const auto& contour : myRDPImprovedContours) polylines(improvedResult, contour, true, Scalar(0, 255, 0), 1);
+        for (const auto& contour : opencvRDPContours) polylines(opencvResult, contour, true, Scalar(255, 0, 0), 1);
 
         string myWindowName = "RDP Propriu Epsilon " + to_string(epsilonRatio * 100) + "%";
+        string improvedWindowName = "RDP Imbunatatit Epsilon " + to_string(epsilonRatio * 100) + "%";
         string opencvWindowName = "RDP OpenCV Epsilon " + to_string(epsilonRatio * 100) + "%";
         imshow(myWindowName, myResult);
+        imshow(improvedWindowName, improvedResult);
         imshow(opencvWindowName, opencvResult);
     }
 
